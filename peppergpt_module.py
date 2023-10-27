@@ -63,10 +63,10 @@ class BaseSpeechReceiverModule(naoqi.ALModule):
         self.sttProxy.enableAutoDetection()
         
         memory = naoqi.ALProxy("ALMemory", self.strNaoIp, NAO_PORT)
-        memory.subscribeToEvent("SpeechRecognition", self.getName(), "processRemote")
+        memory.subscribeToEvent("SpeechRecognition", self.getName(), "speechRecognized")
+        memory.subscribeToEvent("ALTextToSpeech/TextDone", self.getName(), "sayFinished")
         self.converstion = Conversation(os.getenv("CHATGPT_API"), "gpt-3.5-turbo", "You are a helpful real robot named Pepper.")
         self.ttsProxy = naoqi.ALProxy("ALTextToSpeech", self.strNaoIp, NAO_PORT)
-        
         print( "INF: ReceiverModule: started!" )
 
 
@@ -80,13 +80,17 @@ class BaseSpeechReceiverModule(naoqi.ALModule):
     def version( self ):
         return "1.1"
 
-    def processRemote(self, signalName, message):
+    def sayFinished(self, signalName, finished, id):
+        if finished:
+            self.sttProxy.enableAutoDetection()
+    
+    def speechRecognized(self, signalName, message):
         print("STT: %s" % message)
         response = self.converstion.send(message)
         print("ChatGPT: %s" % response)
         self.sttProxy.disableAutoDetection()
         self.ttsProxy.say(response.encode("utf-8"))
-        self.sttProxy.enableAutoDetection()
+        
 
 
 def main():
