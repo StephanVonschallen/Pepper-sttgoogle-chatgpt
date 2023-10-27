@@ -51,6 +51,17 @@ class BaseSpeechReceiverModule(naoqi.ALModule):
         self.stop()
 
     def start( self ):
+        self.sttProxy = ALProxy("SpeechRecognition")
+        self.sttProxy.start()
+        self.sttProxy.setHoldTime(2.5)
+        self.sttProxy.setIdleReleaseTime(1.0)
+        self.sttProxy.setMaxRecordingDuration(10)
+        self.sttProxy.setLookaheadDuration(0.5)
+        self.sttProxy.setLanguage("de-de")
+        self.sttProxy.calibrate()
+        self.sttProxy.setAutoDetectionThreshold(5)
+        self.sttProxy.enableAutoDetection()
+        
         memory = naoqi.ALProxy("ALMemory", self.strNaoIp, NAO_PORT)
         memory.subscribeToEvent("SpeechRecognition", self.getName(), "processRemote")
         self.converstion = Conversation(os.getenv("CHATGPT_API"), "gpt-3.5-turbo", "You are a helpful real robot named Pepper.")
@@ -73,7 +84,9 @@ class BaseSpeechReceiverModule(naoqi.ALModule):
         print("STT: %s" % message)
         response = self.converstion.send(message)
         print("ChatGPT: %s" % response)
+        self.sttProxy.disableAutoDetection()
         self.ttsProxy.say(response.encode("utf-8"))
+        self.sttProxy.enableAutoDetection()
 
 
 def main():
@@ -118,29 +131,6 @@ def main():
     global BaseSpeechReceiverModule
     BaseSpeechReceiverModule = BaseSpeechReceiverModule("BaseSpeechReceiverModule", pip)
     BaseSpeechReceiverModule.start()
-
-    if(False):
-        #one-shot recording for at least 5 seconds
-        SpeechRecognition = ALProxy("SpeechRecognition")
-        SpeechRecognition.start()
-        SpeechRecognition.setHoldTime(5)
-        SpeechRecognition.setIdleReleaseTime(1.7)
-        SpeechRecognition.setMaxRecordingDuration(10)
-        SpeechRecognition.startRecording()
-
-    else:
-        # auto-detection
-        SpeechRecognition = ALProxy("SpeechRecognition")
-        SpeechRecognition.start()
-        SpeechRecognition.setHoldTime(2.5)
-        SpeechRecognition.setIdleReleaseTime(1.0)
-        SpeechRecognition.setMaxRecordingDuration(10)
-        SpeechRecognition.setLookaheadDuration(0.5)
-        SpeechRecognition.setLanguage("de-de")
-        SpeechRecognition.calibrate()
-        SpeechRecognition.setAutoDetectionThreshold(5)
-        SpeechRecognition.enableAutoDetection()
-        #SpeechRecognition.startRecording()
 
     try:
         while True:
