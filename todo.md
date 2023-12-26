@@ -1,5 +1,9 @@
 Weitere Mögliche Implementationen
 
-1)	System-Prompt ändern mit Inputs während der Konversation
-2)	Logger hinzufügen (Timestamps der Nachrichten)
-3)	Sensitivität Mic einstellen
+* Logger hinzufügen (Timestamps der Nachrichten)
+* System-Prompt ändern mit Inputs während der Konversation
+* Sensitivität Mic einstellen
+* Voice Recognition 
+* Ins Wortfallen (Unterbruch feststellen & aufhören zu sprechen)
+* Besserer SST Service (evt. CH)
+* pepper docker image
