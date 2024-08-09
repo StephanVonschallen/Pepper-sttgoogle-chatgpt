@@ -10,6 +10,7 @@ import os
 import threading
 import time
 import sys
+import logging
 from naoqi import ALProxy, ALModule, ALBroker
 from optparse import OptionParser
 from chatgpt import Conversation
@@ -17,6 +18,11 @@ from Queue import Queue, Empty
 
 # Queue for command inputs
 command_queue = Queue()
+
+# Redirect stdout and stderr to a file
+LOG_DIRECTORY = "C:/Users/ma1177259/OneDrive - FHNW/Documents/Peppertest/"
+LOG_FILE = os.path.join(LOG_DIRECTORY, "console_output.log")
+logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(message)s')
 
 #Prompt for Pepper
 prompt_init = "Du bist jetzt ein autonomer sozialer Roboter und antwortest bei allen Fragen als solcher und bleibst deiner Rolle treu. Halte deine Antworten möglichst kurz."
@@ -47,42 +53,33 @@ class BaseSpeechReceiverModule(ALModule):
         self.is_muted = False
         self.manual_chatgpt_input = False
 
-        try:
-            self.conversation = Conversation(
-                os.getenv("CHATGPT_API"), "gpt-4-turbo", full_prompt)
-            self.ttsProxy = ALProxy("ALAnimatedSpeech", self.strNaoIp, NAO_PORT)
-            self.sttProxy = ALProxy("SpeechRecognition", self.strNaoIp, NAO_PORT)
-            self.memory = ALProxy("ALMemory", self.strNaoIp, NAO_PORT)
-            print("INF: ReceiverModule: started!")
-        except Exception as e:
-            print("ERR: Initialization failed:", e)
+        self.conversation = Conversation(
+            os.getenv("CHATGPT_API"), "gpt-4-turbo", full_prompt)
+        self.ttsProxy = ALProxy("ALAnimatedSpeech", self.strNaoIp, NAO_PORT)
+        self.sttProxy = ALProxy("SpeechRecognition", self.strNaoIp, NAO_PORT)
+        self.memory = ALProxy("ALMemory", self.strNaoIp, NAO_PORT)
+        print("INF: ReceiverModule: started!")
+        logging.info("INF: ReceiverModule: started!")
     
     def start(self):
-        
-        try:
-            self.sttProxy.start()
-            self.sttProxy.setHoldTime(2.5)
-            self.sttProxy.setIdleReleaseTime(2)
-            self.sttProxy.setMaxRecordingDuration(20)
-            self.sttProxy.setLookaheadDuration(0.5)
-            self.sttProxy.setLanguage("de-de")
-            self.sttProxy.calibrate()
-            self.sttProxy.setAutoDetectionThreshold(5)
-            self.sttProxy.enableAutoDetection()
-            self.memory.subscribeToEvent("SpeechRecognition", self.getName(), "speechRecognized")
-            self.memory.subscribeToEvent("ALAnimatedSpeech/EndOfAnimatedSpeech", self.getName(), "sayFinished")
-
-            print("INF: ReceiverModule: speech recognition started")
-        except Exception as e:
-            print("ERR: Start failed:", e)
+        self.sttProxy.start()
+        self.sttProxy.setHoldTime(2.5)
+        self.sttProxy.setIdleReleaseTime(2)
+        self.sttProxy.setMaxRecordingDuration(20)
+        self.sttProxy.setLookaheadDuration(0.5)
+        self.sttProxy.setLanguage("de-de")
+        self.sttProxy.calibrate()
+        self.sttProxy.setAutoDetectionThreshold(5)
+        self.sttProxy.enableAutoDetection()
+        self.memory.subscribeToEvent("SpeechRecognition", self.getName(), "speechRecognized")
+        self.memory.subscribeToEvent("ALAnimatedSpeech/EndOfAnimatedSpeech", self.getName(), "sayFinished")
+        print("INF: ReceiverModule: speech recognition started")
+        logging.info("ReceiverModule: speech recognition started")
     
     def stop(self):
-        try:
-            print("INF: ReceiverModule: stopping...")
-            self.memory.unsubscribe(self.getName())
-            print("INF: ReceiverModule: stopped!")
-        except Exception as e:
-            print("ERR: Stop failed:", e)
+        print("INF: ReceiverModule: stopping...")
+        self.memory.unsubscribe(self.getName())
+        print("INF: ReceiverModule: stopped!")
 
     def sayFinished(self, signalName, finished, id):
         if finished:
@@ -93,12 +90,15 @@ class BaseSpeechReceiverModule(ALModule):
             self.sttProxy.disableAutoDetection()
             if self.is_muted:
                 print("STT (muted): %s" % message)
+                logging.info("STT (muted): %s" % message)
                 return  # Ignore speech recognition if muted
             
             if not self.is_muted:
                 print("STT: %s" % message)
+                logging.info("STT: %s" % message)
                 response = self.conversation.send(message)
                 print("ChatGPT: %s" % response)
+                logging.info("ChatGPT: %s" % response)
                 self.ttsProxy.say(response.encode("utf-8"), "contextual")
 
         except Exception as e:
@@ -108,17 +108,19 @@ class BaseSpeechReceiverModule(ALModule):
 
 def command_line_interface():
     while True:
-        user_input = raw_input("").strip().lower()
-        command_queue.put(user_input)
-        if user_input == "exit":
+        try:
+            user_input = raw_input("").strip().lower()
+            command_queue.put(user_input)
+            if user_input == "exit":
+                break
+        except EOFError:
+            print("Exiting command line interface.")
             break
-
 def main():
     parser = OptionParser()
     parser.add_option("--pip", help="Parent broker port. The IP address or your robot", dest="pip")
     parser.add_option("--pport", help="Parent broker port. The port NAOqi is listening to", dest="pport", type="int")
     parser.set_defaults(pip="nao.local", pport=NAO_PORT)
-    
     (opts, args_) = parser.parse_args()
     pip = opts.pip
     pport = opts.pport
@@ -149,20 +151,22 @@ def main():
                         try:
                             response = BaseSpeechReceiverModule.conversation.send(message)
                             print("ChatGPT-UserInput: %s" % response)
+                            logging.info("ChatGPT-UserInput: %s" % response)
                             message =()
                             response = ()
                         except Exception as e:
                             print("ERR: ChatGPT command failed:", e)
                     elif command == "exit":
                         print("Exiting...")
+                        logging.info("End of Conversation")
                         break
                 except Empty:
                     pass
                 time.sleep(0.1)
         except KeyboardInterrupt:
             print("Interrupted by user, shutting down")
+            logging.info("End of Conversation")
         finally:
-            BaseSpeechReceiverModule.stop()
             myBroker.shutdown()
             sys.exit(0)
     except Exception as e:
