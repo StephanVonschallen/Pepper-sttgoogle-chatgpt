@@ -19,9 +19,15 @@ from Queue import Queue, Empty
 # Queue for command inputs
 command_queue = Queue()
 
-# Redirect stdout and stderr to a file
-LOG_DIRECTORY = "C:/Users/ma1177259/OneDrive - FHNW/Documents/Peppertest/"
-LOG_FILE = os.path.join(LOG_DIRECTORY, "console_output.log")
+#Creating folder for saving data
+PARTICIPANT_ID ="Participant_01"
+SAVE_DIRECTORY = "C:/Users/ma1177259/OneDrive - FHNW/Documents/Peppertest/"
+PARTICIPANT_SAVE_DIRECTORY = os.path.join(SAVE_DIRECTORY, PARTICIPANT_ID)
+if not os.path.exists(PARTICIPANT_SAVE_DIRECTORY):
+    os.makedirs(PARTICIPANT_SAVE_DIRECTORY)
+
+#Logging
+LOG_FILE = os.path.join(PARTICIPANT_SAVE_DIRECTORY, "console_output.log")
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(message)s')
 
 #Prompt for Pepper
@@ -63,10 +69,10 @@ class BaseSpeechReceiverModule(ALModule):
     
     def start(self):
         self.sttProxy.start()
-        self.sttProxy.setHoldTime(2.5)
+        self.sttProxy.setHoldTime(1)
         self.sttProxy.setIdleReleaseTime(2)
-        self.sttProxy.setMaxRecordingDuration(20)
-        self.sttProxy.setLookaheadDuration(0.5)
+        self.sttProxy.setMaxRecordingDuration(15)
+        self.sttProxy.setLookaheadDuration(1)
         self.sttProxy.setLanguage("de-de")
         self.sttProxy.calibrate()
         self.sttProxy.setAutoDetectionThreshold(5)
@@ -86,6 +92,7 @@ class BaseSpeechReceiverModule(ALModule):
             self.sttProxy.enableAutoDetection()
     
     def speechRecognized(self, signalName, message):
+        
         try:          
             self.sttProxy.disableAutoDetection()
             if self.is_muted:
@@ -103,8 +110,6 @@ class BaseSpeechReceiverModule(ALModule):
 
         except Exception as e:
             print("ERR: Handling speech recognition failed:", e)
-
-
 
 def command_line_interface():
     while True:
