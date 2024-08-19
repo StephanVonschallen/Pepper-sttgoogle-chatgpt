@@ -21,9 +21,10 @@ from Queue import Queue, Empty
 from wait_until_response import wait_until_new_response
 
 #Argument for GoogleForms
+#Adjust Key https://developers.google.com/oauthplayground
 googleFormAPI = True
 googleFormID = "1tuRmxHBZAVR8Mcg0Mk71MXjhSW_kEX9peNo4hfQfJCI"
-googleFormKey = "ya29.a0AcM612zrV-Vlq5LIdmo__EadVmOpUVSmZ1HWSKDBZFqeQ1ssvfrcBe_CHjrbWh6nPhJ-loDSEQy05_JUXgF6fZi96IaedsfOFms59raat6OcXt7sr5TDaQg_x6ZEhFTuphiHLcsTl4299kXMvqiF-Sm0YMCYs8PFrNybBbLUaCgYKATISARMSFQHGX2MiyxJAN8IoBagZrB1HfSa2NQ0175"
+googleFormKey = "THIS IS A KEY"
 
 # Queue for command inputs
 command_queue = Queue()
