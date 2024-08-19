@@ -6,6 +6,9 @@ NAO_PORT = 9559 # Robot
 # NAO_IP = "127.0.0.1" # Virtual Machine
 NAO_IP = "nao.local" # Pepper default
 
+
+
+
 import os
 import threading
 import time
@@ -15,6 +18,12 @@ from naoqi import ALProxy, ALModule, ALBroker
 from optparse import OptionParser
 from chatgpt import Conversation
 from Queue import Queue, Empty
+from wait_until_response import wait_until_new_response
+
+#Argument for GoogleForms
+googleFormAPI = True
+googleFormID = "1tuRmxHBZAVR8Mcg0Mk71MXjhSW_kEX9peNo4hfQfJCI"
+googleFormKey = "ya29.a0AcM612zrV-Vlq5LIdmo__EadVmOpUVSmZ1HWSKDBZFqeQ1ssvfrcBe_CHjrbWh6nPhJ-loDSEQy05_JUXgF6fZi96IaedsfOFms59raat6OcXt7sr5TDaQg_x6ZEhFTuphiHLcsTl4299kXMvqiF-Sm0YMCYs8PFrNybBbLUaCgYKATISARMSFQHGX2MiyxJAN8IoBagZrB1HfSa2NQ0175"
 
 # Queue for command inputs
 command_queue = Queue()
@@ -64,6 +73,7 @@ class BaseSpeechReceiverModule(ALModule):
         self.ttsProxy = ALProxy("ALAnimatedSpeech", self.strNaoIp, NAO_PORT)
         self.sttProxy = ALProxy("SpeechRecognition", self.strNaoIp, NAO_PORT)
         self.memory = ALProxy("ALMemory", self.strNaoIp, NAO_PORT)
+        self.counter = 0
         print("INF: ReceiverModule: started!")
         logging.info("INF: ReceiverModule: started!")
     
@@ -88,11 +98,11 @@ class BaseSpeechReceiverModule(ALModule):
         print("INF: ReceiverModule: stopped!")
 
     def sayFinished(self, signalName, finished, id):
-        if finished:
+        if finished and self.counter < 3:
             self.sttProxy.enableAutoDetection()
     
     def speechRecognized(self, signalName, message):
-        
+        self.counter += 1
         try:          
             if self.is_muted:
                 print("STT (muted): %s" % message)
@@ -106,6 +116,18 @@ class BaseSpeechReceiverModule(ALModule):
                 print("ChatGPT: %s" % response)
                 logging.info("ChatGPT: %s" % response)
                 self.ttsProxy.say(response.encode("utf-8"), "contextual")
+                if self.counter == 3:
+                    self.sttProxy.disableAutoDetection()
+                    self.ttsProxy.say("Es ist Zeit für das Formular.", "contextual")
+                    logging.info("test")
+                    form_response = wait_until_new_response(googleFormID, googleFormKey)
+                    inform_llm = "Ich habe das Formular ausgefüllt und wählte " + form_response["answers"]["39be9ff0"]["textAnswers"]["answers"][0]["value"]
+                    print(inform_llm)
+                    response = self.conversation.send(inform_llm)
+                    logging.info("ChatGPT: %s" % response)
+                    self.ttsProxy.say(response.encode("utf-8"), "contextual")
+                    self.sttProxy.enableAutoDetection()
+                    self.counter = 0
 
         except Exception as e:
             print("ERR: Handling speech recognition failed:", e)
@@ -140,7 +162,7 @@ def main():
         cli_thread = threading.Thread(target=command_line_interface)
         cli_thread.daemon = True  # Allow thread to exit with the program
         cli_thread.start()
-        
+   
         try:
             while True:
                 try:
