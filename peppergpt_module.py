@@ -65,11 +65,13 @@ class BaseSpeechReceiverModule(naoqi.ALModule):
         memory = naoqi.ALProxy("ALMemory", self.strNaoIp, NAO_PORT)
         memory.subscribeToEvent("SpeechRecognition", self.getName(), "speechRecognized")
         memory.subscribeToEvent("ALTextToSpeech/TextDone", self.getName(), "sayFinished")
-<<<<<<< HEAD
-        self.converstion = Conversation(os.getenv("CHATGPT_API"), "gpt-3.5-turbo", "Du bist ein sozialer Roboter, der in einem Altersheim im Einsatz ist und Bewohnende zur Therapie begleiten soll. Dabei ist es wichtig, dass du Bewohnende zur Therapie motivierst. Fasse deine Antworten kurz.")
-=======
-        self.converstion = Conversation(os.getenv("CHATGPT_API"), "gpt-3.5-turbo", "Du bist ein sozialer Roboter, der in einem Altersheim im Einsatz ist und Bewohnende zur Therapie begleiten soll. Dabei ist es wichtig, dass du Bewohnende zur Therapie motivierst. Fasse deine Antworten kurz und lasse dich nicht zu sehr von den Bewohnenden ablenken.")
->>>>>>> ebc8f4360fd03f0421abcb87c47dcf92e4fb2069
+        self.converstion = Conversation(
+            os.getenv("CHATGPT_API"),
+            "gpt-3.5-turbo",
+            """Du bist ein sozialer Roboter, der in einem Altersheim im Einsatz ist und Bewohnende zur Therapie 
+            begleiten soll. Dabei ist es wichtig, dass du Bewohnende zur Therapie motivierst. Fasse deine Antworten 
+            kurz und lasse dich nicht zu sehr von den Bewohnenden ablenken."""
+        )
         self.ttsProxy = naoqi.ALProxy("ALTextToSpeech", self.strNaoIp, NAO_PORT)
         print( "INF: ReceiverModule: started!" )
 
