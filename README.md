@@ -1,4 +1,4 @@
-# sttgoogle-chatgpt
+# Pepper sttgoogle-chatgpt
 
 
 NOTE: This version is depricated and only used for study documentation, use "https://github.com/studerus/openai-realtime-api-pepper-nao-robot" for a more up-to-date version of LLM-powered HRI with Pepper
