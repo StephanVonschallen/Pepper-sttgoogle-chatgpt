@@ -21,7 +21,7 @@ command_queue = Queue()
 
 #Creating folder for saving data
 PARTICIPANT_ID ="Test_01/"
-SAVE_DIRECTORY = "C:/Users/ma1177259/OneDrive - FHNW/Documents/Peppertest/"
+SAVE_DIRECTORY = "PATH"
 PARTICIPANT_SAVE_DIRECTORY = os.path.join(SAVE_DIRECTORY, PARTICIPANT_ID)
 if not os.path.exists(PARTICIPANT_SAVE_DIRECTORY):
     os.makedirs(PARTICIPANT_SAVE_DIRECTORY)
