@@ -5,7 +5,7 @@ import os
 import time
 
 # Define the strings shared between the scripts
-pip_address = "169.254.55.10"
+pip_address = "IP_ADRESS"
 python_executable = "c:/Python27/python.exe"
 
 # Define the paths to the scripts
